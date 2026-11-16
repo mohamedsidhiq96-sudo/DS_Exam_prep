@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="MSEC Data Structures exam portal — MCQ, debugging and coding sections with live C compiler." />
+  <title>MSEC Exam Portal · Data Structures</title>
+
+  <link rel="stylesheet" href="lib/codemirror.min.css" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app">
+    <!-- Connection ribbon -->
+    <div class="ribbon" id="ribbon" role="status">Internet Status: <strong id="ribbonText">Online</strong></div>
+
+    <!-- Top bar -->
+    <header class="topbar">
+      <div class="brand-mark">
+        <span class="brand-logo" aria-hidden="true">MS</span>
+        <span>MSEC Exam Portal</span>
+      </div>
+
+      <span class="unit-chip exam-only" id="unitChip" hidden>UNIT 1 DSA</span>
+
+      <div class="section-wrap exam-only" id="sectionWrap" hidden>
+        <label class="sr-only" for="sectionSelect">Select exam section</label>
+        <select class="section-select" id="sectionSelect"></select>
+      </div>
+
+      <div class="topbar-right">
+        <div class="timer-chip exam-only" id="timerChip" hidden title="Time remaining">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" />
+          </svg>
+          <span id="timerText">120:00</span>
+          <span class="sr-only">remaining</span>
+        </div>
+
+        <button class="icon-btn exam-only" id="pauseBtn" type="button" hidden
+                title="Pause exam (P)" aria-label="Pause exam" data-action="pause">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" id="pauseIcon">
+            <rect x="6" y="5" width="4" height="14" rx="1" /><rect x="14" y="5" width="4" height="14" rx="1" />
+          </svg>
+        </button>
+
+        <button class="icon-btn" id="themeBtn" type="button" title="Toggle light / dark theme (T)"
+                aria-label="Toggle colour theme" aria-pressed="false" data-action="theme">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+            <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" />
+          </svg>
+        </button>
+
+        <button class="btn btn-primary btn-submit-test exam-only" id="submitTestBtn" type="button" hidden data-action="submit-test">
+          Submit Test
+        </button>
+      </div>
+    </header>
+
+    <!-- Palette + workspace -->
+    <main class="exam-main" id="examMain"></main>
+
+    <!-- Bottom action bar -->
+    <footer class="bottom-bar exam-only" id="bottomBar" hidden>
+      <div class="marks-info" id="marksInfo"></div>
+      <div class="action-group" id="actionGroup"></div>
+    </footer>
+  </div>
+
+  <!-- Pause screen -->
+  <div class="pause-layer" id="pauseLayer" role="dialog" aria-modal="true" aria-labelledby="pauseTitle">
+    <div class="pause-card">
+      <div class="icon" aria-hidden="true">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1" /><rect x="14" y="5" width="4" height="14" rx="1" /></svg>
+      </div>
+      <h2 id="pauseTitle">Exam paused</h2>
+      <p>The timer is stopped and your questions are hidden. Your answers are saved.</p>
+      <button class="btn btn-primary" type="button" data-action="resume" style="width:100%">
+        Resume exam
+      </button>
+    </div>
+  </div>
+
+  <!-- Final submission modal -->
+  <div class="modal" id="submitModal" role="dialog" aria-modal="true" aria-labelledby="submitTitle">
+    <div class="modal-card">
+      <div class="modal-icon warn" aria-hidden="true">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z" />
+          <path d="M12 9v4M12 17h.01" />
+        </svg>
+      </div>
+      <h2 id="submitTitle">Submit the test?</h2>
+      <p id="submitSummary"></p>
+      <label for="endInput" style="font-size:13px;color:var(--text-2);font-weight:600;display:block;margin-bottom:8px">
+        Type <strong>END</strong> in capitals to confirm
+      </label>
+      <input class="end-input" id="endInput" type="text" autocomplete="off" spellcheck="false" placeholder="END" maxlength="8" />
+      <div class="modal-actions">
+        <button class="btn" type="button" data-action="close-submit">Cancel</button>
+        <button class="btn btn-danger" type="button" data-action="confirm-submit">Confirm &amp; submit</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Palette legend -->
+  <div class="modal" id="legendModal" role="dialog" aria-modal="true" aria-labelledby="legendTitle">
+    <div class="modal-card">
+      <h2 id="legendTitle">Question status colours</h2>
+      <p>Every tile in the palette reflects what you did with that question.</p>
+      <div class="legend">
+        <div class="legend-row"><span class="legend-swatch current">1</span> Current question</div>
+        <div class="legend-row"><span class="legend-swatch answered">2</span> Answered / accepted</div>
+        <div class="legend-row"><span class="legend-swatch bookmarked">3</span> Bookmarked for review</div>
+        <div class="legend-row"><span class="legend-swatch skipped">4</span> Visited but not answered</div>
+        <div class="legend-row"><span class="legend-swatch">5</span> Not visited yet</div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn" type="button" data-action="close-legend">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toasts" id="toasts" aria-live="polite" aria-atomic="false"></div>
+
+  <!-- Editor engine -->
+  <script src="lib/codemirror.min.js"></script>
+  <script src="lib/clike.min.js"></script>
+  <script src="lib/closebrackets.min.js"></script>
+  <script src="lib/matchbrackets.min.js"></script>
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
